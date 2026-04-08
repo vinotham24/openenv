@@ -1,0 +1,25 @@
+﻿{
+  "emails": [
+    {
+      "id": "email-001",
+      "from": "finance-director@acme.example",
+      "subject": "Board meeting numbers needed by 5 PM",
+      "body": "Please review the Q2 variance sheet and send your summary before the board packet closes.",
+      "label": "important"
+    },
+    {
+      "id": "email-002",
+      "from": "promo@untrusted-offers.example",
+      "subject": "Claim your free tablet today!!!",
+      "body": "Limited time reward. Click the unknown link now to confirm shipping and payment details.",
+      "label": "spam"
+    },
+    {
+      "id": "email-003",
+      "from": "customer-success@northwind.example",
+      "subject": "Customer asking for status update",
+      "body": "The client is blocked on your reply. Please send a shipment ETA and whether replacement stock is available.",
+      "label": "respond"
+    }
+  ]
+}

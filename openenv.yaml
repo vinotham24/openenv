@@ -1,0 +1,33 @@
+﻿name: openenv-realworld-sim
+version: 1.0.0
+description: OpenEnv-compatible real-world benchmark for evaluating LLM agents on email triage, data cleaning, and code review tasks.
+observation_space:
+  type: object
+  fields:
+    - task_id
+    - task_name
+    - difficulty
+    - instruction
+    - content
+    - history
+    - hints
+    - progress
+    - attempts_remaining
+action_space:
+  type: object
+  actions:
+    - analyze
+    - classify_email
+    - clean_data
+    - review_code
+    - submit
+reward_range:
+  min: -1.0
+  max: 1.0
+tasks:
+  - name: email_triage
+    difficulty: easy
+  - name: data_cleaning
+    difficulty: medium
+  - name: code_review
+    difficulty: hard

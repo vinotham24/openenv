@@ -1,0 +1,6 @@
+﻿customer_id,signup_date,country,purchase_total,status
+001,2026/01/05, usa ,1200.5,active
+002,05-02-2026,India,,ACTIVE
+003,2026-03-11,uk,980.00,inactive
+004,,United States, 450 ,Active
+005,2026.04.01, india,610.75,active
