@@ -176,9 +176,10 @@ def run_task(task_index: int) -> None:
         print_end(False, steps, rewards)
 
 
-def main() -> None:
+def main():
     for index in range(3):
         run_task(index)
+        break
 
 
 if __name__ == "__main__":
