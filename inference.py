@@ -176,10 +176,12 @@ def run_task(task_index: int) -> None:
         print_end(False, steps, rewards)
 
 
-def main():
-    for index in range(3):
+def main() -> None:
+    env = OpenEnvRealWorldSim(seed=42)
+    env.reset()
+
+    for index in range(len(env.tasks)):
         run_task(index)
-        break
 
 
 if __name__ == "__main__":
