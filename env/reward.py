@@ -43,5 +43,5 @@ class RewardTracker:
             reward -= 0.15
 
         self.last_signature = signature
-        reward = round(max(min(reward, 1.0), -1.0), 4)
+        reward = round(max(min(reward, 0.9999), -0.9999), 4)
         return reward, components
