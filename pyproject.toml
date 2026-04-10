@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "openenv-realworld-sim"
+version = "1.0.0"
+description = "OpenEnv-compatible real-world benchmark for evaluating LLM agents on email triage, data cleaning, and code review tasks."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "pydantic>=2.7.0,<3.0.0",
+    "openai>=1.40.0,<2.0.0",
+    "pytest>=8.2.0,<9.0.0",
+    "fastapi",
+    "uvicorn",
+]
