@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 from env.schemas import Action, Observation
-from env.utils import load_json
+from env.utils import bounded_unit_interval, load_json
 from tasks.email_triage.grader import grade_email_triage
 
 
@@ -28,6 +28,7 @@ class EmailTriageTask:
         self.last_progress = 0.0
 
     def observation(self, max_steps: int) -> Observation:
+        raw_progress = grade_email_triage(self.predictions, self.answers)
         return Observation(
             task_id=self.task_id,
             task_name=self.task_name,
@@ -36,7 +37,7 @@ class EmailTriageTask:
             content={"emails": self.emails, "labels": ["spam", "important", "respond"]},
             history=self.history,
             hints=["Use exact labels.", "Urgent internal work is usually important."],
-            progress=grade_email_triage(self.predictions, self.answers),
+            progress=bounded_unit_interval(raw_progress),
             attempts_remaining=max(max_steps - len(self.history), 0),
         )
 
@@ -72,15 +73,15 @@ class EmailTriageTask:
             error = "unsupported action for email triage"
 
         self.history.append({"action_type": action.action_type, "payload": action.payload})
-        score = grade_email_triage(self.predictions, self.answers)
-        if len(self.predictions) == len(self.answers) and score == 1.0:
+        raw_score = grade_email_triage(self.predictions, self.answers)
+        if len(self.predictions) == len(self.answers) and raw_score == 1.0:
             completed = True
-        progress_delta = max(score - self.last_progress, 0.0)
-        self.last_progress = max(self.last_progress, score)
+        progress_delta = max(raw_score - self.last_progress, 0.0)
+        self.last_progress = max(self.last_progress, raw_score)
         return {
             "valid": valid,
             "completed": completed,
-            "score": score,
+            "score": bounded_unit_interval(raw_score),
             "progress_delta": round(progress_delta if valid else 0.0, 4),
             "error": error,
             "details": details,

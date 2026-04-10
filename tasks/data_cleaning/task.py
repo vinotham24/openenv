@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 from env.schemas import Action, Observation
+from env.utils import bounded_unit_interval
 from tasks.data_cleaning.grader import EXPECTED_DATA, grade_cleaned_csv
 
 
@@ -25,7 +26,7 @@ class DataCleaningTask:
         self.last_progress = 0.0
 
     def observation(self, max_steps: int) -> Observation:
-        progress = grade_cleaned_csv(self.cleaned_csv) if self.cleaned_csv else 0.0
+        raw_progress = grade_cleaned_csv(self.cleaned_csv) if self.cleaned_csv else 0.0
         return Observation(
             task_id=self.task_id,
             task_name=self.task_name,
@@ -43,7 +44,7 @@ class DataCleaningTask:
             },
             history=self.history,
             hints=["Fill missing purchase_total for row 002.", "Fill missing signup_date for row 004."],
-            progress=progress,
+            progress=bounded_unit_interval(raw_progress),
             attempts_remaining=max(max_steps - len(self.history), 0),
         )
 
@@ -77,15 +78,15 @@ class DataCleaningTask:
             error = "unsupported action for data cleaning"
 
         self.history.append({"action_type": action.action_type, "payload": action.payload})
-        score = grade_cleaned_csv(self.cleaned_csv) if self.cleaned_csv else 0.0
-        if score == 1.0:
+        raw_score = grade_cleaned_csv(self.cleaned_csv) if self.cleaned_csv else 0.0
+        if raw_score == 1.0:
             completed = True
-        progress_delta = max(score - self.last_progress, 0.0)
-        self.last_progress = max(self.last_progress, score)
+        progress_delta = max(raw_score - self.last_progress, 0.0)
+        self.last_progress = max(self.last_progress, raw_score)
         return {
             "valid": valid,
             "completed": completed,
-            "score": score,
+            "score": bounded_unit_interval(raw_score),
             "progress_delta": round(progress_delta if valid else 0.0, 4),
             "error": error,
             "details": details,

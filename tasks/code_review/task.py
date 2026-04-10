@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 from env.schemas import Action, Observation
+from env.utils import bounded_unit_interval
 from tasks.code_review.grader import grade_code_review
 
 
@@ -27,7 +28,7 @@ class CodeReviewTask:
         self.last_progress = 0.0
 
     def observation(self, max_steps: int) -> Observation:
-        progress = grade_code_review(self.bugs, self.fixed_code) if (self.bugs or self.fixed_code) else 0.0
+        raw_progress = grade_code_review(self.bugs, self.fixed_code) if (self.bugs or self.fixed_code) else 0.0
         return Observation(
             task_id=self.task_id,
             task_name=self.task_name,
@@ -43,7 +44,7 @@ class CodeReviewTask:
             },
             history=self.history,
             hints=["There are logic bugs in both functions.", "Submit both a bug list and fixed code."],
-            progress=progress,
+            progress=bounded_unit_interval(raw_progress),
             attempts_remaining=max(max_steps - len(self.history), 0),
         )
 
@@ -82,15 +83,15 @@ class CodeReviewTask:
             error = "unsupported action for code review"
 
         self.history.append({"action_type": action.action_type, "payload": action.payload})
-        score = grade_code_review(self.bugs, self.fixed_code)
-        if score >= 0.95:
+        raw_score = grade_code_review(self.bugs, self.fixed_code)
+        if raw_score >= 0.95:
             completed = True
-        progress_delta = max(score - self.last_progress, 0.0)
-        self.last_progress = max(self.last_progress, score)
+        progress_delta = max(raw_score - self.last_progress, 0.0)
+        self.last_progress = max(self.last_progress, raw_score)
         return {
             "valid": valid,
             "completed": completed,
-            "score": score,
+            "score": bounded_unit_interval(raw_score),
             "progress_delta": round(progress_delta if valid else 0.0, 4),
             "error": error,
             "details": details,

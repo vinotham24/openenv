@@ -33,3 +33,7 @@ def stable_signature(data: Any) -> str:
 
 def lowercase_bool(value: bool) -> str:
     return "true" if value else "false"
+
+
+def bounded_unit_interval(value: float, epsilon: float = 1e-4) -> float:
+    return round(min(max(value, epsilon), 1.0 - epsilon), 4)
