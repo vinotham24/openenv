@@ -35,6 +35,23 @@ class Action(BaseModel):
     payload: dict
 
 
+@app.get("/")
+def root():
+    return {
+        "name": "openenv-realworld-sim",
+        "status": "ok",
+        "message": "API is running.",
+        "routes": {
+            "health": "/health",
+            "metadata": "/metadata",
+            "reset": "/reset",
+            "step": "/step",
+            "state": "/state",
+            "docs": "/docs",
+        },
+    }
+
+
 @app.get("/health")
 def health():
     return {"status": "ok"}
