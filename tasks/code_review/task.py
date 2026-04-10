@@ -4,8 +4,8 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 from env.schemas import Action, Observation
-from env.utils import bounded_unit_interval
 from tasks.code_review.grader import grade_code_review
+from score_utils import bounded_unit_interval
 
 
 class CodeReviewTask:

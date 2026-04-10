@@ -4,8 +4,8 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 from env.schemas import Action, Observation
-from env.utils import bounded_unit_interval
 from tasks.data_cleaning.grader import EXPECTED_DATA, grade_cleaned_csv
+from score_utils import bounded_unit_interval
 
 
 class DataCleaningTask:

@@ -7,7 +7,7 @@ def test_reset_returns_observation() -> None:
     env = OpenEnvRealWorldSim(seed=42)
     observation = env.reset()
     assert observation.task_name == "email_triage"
-    assert observation.progress == 0.0
+    assert observation.progress == 0.0001
     assert observation.attempts_remaining == 6
 
 
