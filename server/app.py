@@ -2,6 +2,8 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 import uvicorn
 
+from score_utils import bounded_unit_interval
+
 app = FastAPI()
 
 # Simple in-memory environment used by the OpenEnv validator.
@@ -38,7 +40,7 @@ def reset():
     current_step = 0
     return {
         "observation": emails[current_step],
-        "reward": 0,
+        "reward": bounded_unit_interval(0.0),
         "done": False,
     }
 
@@ -50,7 +52,7 @@ def step(action: Action):
     correct_label = emails[current_step]["label"]
     predicted = action.payload.get("label")
 
-    reward = 1.0 if predicted == correct_label else 0.0
+    reward = bounded_unit_interval(1.0 if predicted == correct_label else 0.0)
 
     current_step += 1
     done = current_step >= len(emails)
