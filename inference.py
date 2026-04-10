@@ -179,7 +179,6 @@ def run_task(task_index: int) -> None:
 def main() -> None:
     env = OpenEnvRealWorldSim(seed=42)
     env.reset()
-
     for index in range(len(env.tasks)):
         run_task(index)
 

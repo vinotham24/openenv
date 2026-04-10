@@ -142,8 +142,10 @@ This repository is ready for containerized deployment on Hugging Face Spaces.
 
 Deterministic baseline scores:
 
-- `email_triage`: `1.0`
-- `data_cleaning`: `1.0`
-- `code_review`: `1.0`
+- `email_triage`: `0.9`
+- `data_cleaning`: `0.9`
+- `code_review`: `0.9`
+
+Scores are intentionally clamped into the open interval via [`score_utils.py`](/c:/Users/Nivedha%20S/Downloads/hack/openenv-realworld-sim/score_utils.py), so fully correct task outputs top out at `0.9` instead of `1.0`.
 
 The benchmark is lightweight and runs comfortably within 2 vCPU and 8 GB RAM constraints.

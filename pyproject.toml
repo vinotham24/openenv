@@ -19,3 +19,7 @@ dependencies = [
 
 [project.scripts]
 server = "server.app:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+norecursedirs = [".pytest_cache", "pytest-cache-files-*"]
