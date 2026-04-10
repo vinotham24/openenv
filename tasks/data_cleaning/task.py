@@ -5,7 +5,7 @@ from typing import Any, Dict, List
 
 from env.schemas import Action, Observation
 from tasks.data_cleaning.grader import EXPECTED_DATA, grade_cleaned_csv
-from score_utils import bounded_unit_interval
+from score_utils import MIN_TASK_SCORE, bounded_unit_interval
 
 
 class DataCleaningTask:
@@ -18,15 +18,15 @@ class DataCleaningTask:
         self.raw_csv = Path(__file__).with_name("dataset.csv").read_text(encoding="utf-8-sig")
         self.cleaned_csv = ""
         self.history: List[Dict[str, Any]] = []
-        self.last_progress = 0.0
+        self.last_progress = MIN_TASK_SCORE
 
     def reset(self) -> None:
         self.cleaned_csv = ""
         self.history = []
-        self.last_progress = 0.0
+        self.last_progress = MIN_TASK_SCORE
 
     def observation(self, max_steps: int) -> Observation:
-        raw_progress = grade_cleaned_csv(self.cleaned_csv) if self.cleaned_csv else 0.0
+        raw_progress = grade_cleaned_csv(self.cleaned_csv) if self.cleaned_csv else MIN_TASK_SCORE
         return Observation(
             task_id=self.task_id,
             task_name=self.task_name,
@@ -78,7 +78,7 @@ class DataCleaningTask:
             error = "unsupported action for data cleaning"
 
         self.history.append({"action_type": action.action_type, "payload": action.payload})
-        raw_score = grade_cleaned_csv(self.cleaned_csv) if self.cleaned_csv else 0.0
+        raw_score = grade_cleaned_csv(self.cleaned_csv) if self.cleaned_csv else MIN_TASK_SCORE
         if raw_score >= 0.9:
             completed = True
         progress_delta = max(raw_score - self.last_progress, 0.0)

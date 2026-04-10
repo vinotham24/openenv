@@ -5,7 +5,7 @@ from typing import Any, Dict, List
 
 from env.schemas import Action, Observation
 from env.utils import load_json
-from score_utils import bounded_unit_interval
+from score_utils import MIN_TASK_SCORE, bounded_unit_interval
 from tasks.email_triage.grader import grade_email_triage
 
 
@@ -21,12 +21,12 @@ class EmailTriageTask:
         self.answers = {item["id"]: item["label"] for item in self.emails}
         self.predictions: List[Dict[str, str]] = []
         self.history: List[Dict[str, Any]] = []
-        self.last_progress = 0.0
+        self.last_progress = MIN_TASK_SCORE
 
     def reset(self) -> None:
         self.predictions = []
         self.history = []
-        self.last_progress = 0.0
+        self.last_progress = MIN_TASK_SCORE
 
     def observation(self, max_steps: int) -> Observation:
         raw_progress = grade_email_triage(self.predictions, self.answers)

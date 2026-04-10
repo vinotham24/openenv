@@ -5,7 +5,7 @@ from typing import Any, Dict, List
 
 from env.schemas import Action, Observation
 from tasks.code_review.grader import grade_code_review
-from score_utils import bounded_unit_interval
+from score_utils import MIN_TASK_SCORE, bounded_unit_interval
 
 
 class CodeReviewTask:
@@ -19,16 +19,16 @@ class CodeReviewTask:
         self.bugs: List[str] = []
         self.fixed_code = ""
         self.history: List[Dict[str, Any]] = []
-        self.last_progress = 0.0
+        self.last_progress = MIN_TASK_SCORE
 
     def reset(self) -> None:
         self.bugs = []
         self.fixed_code = ""
         self.history = []
-        self.last_progress = 0.0
+        self.last_progress = MIN_TASK_SCORE
 
     def observation(self, max_steps: int) -> Observation:
-        raw_progress = grade_code_review(self.bugs, self.fixed_code) if (self.bugs or self.fixed_code) else 0.0
+        raw_progress = grade_code_review(self.bugs, self.fixed_code) if (self.bugs or self.fixed_code) else MIN_TASK_SCORE
         return Observation(
             task_id=self.task_id,
             task_name=self.task_name,

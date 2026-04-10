@@ -22,7 +22,7 @@ class Observation(BaseModel):
     content: Dict[str, Any]
     history: List[Dict[str, Any]] = Field(default_factory=list)
     hints: List[str] = Field(default_factory=list)
-    progress: float = Field(default=0.0, ge=0.0, le=1.0)
+    progress: float = Field(default=0.1, ge=0.0, le=1.0)
     attempts_remaining: int = Field(default=0, ge=0)
 
 
