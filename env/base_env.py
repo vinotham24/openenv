@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Tuple
 from env.reward import RewardTracker
 from env.schemas import Action, Observation, Reward
 from env.utils import setup_logger, stable_signature
+from score_utils import bounded_unit_interval
 from tasks.code_review.task import CodeReviewTask
 from tasks.data_cleaning.task import DataCleaningTask
 from tasks.email_triage.task import EmailTriageTask
@@ -98,7 +99,7 @@ class OpenEnvRealWorldSim:
                 content={"state": self.state()},
                 history=[],
                 hints=[],
-                progress=1.0,
+                progress=bounded_unit_interval(1.0),
                 attempts_remaining=0,
             )
         )
