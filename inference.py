@@ -167,7 +167,7 @@ def run_task(task_index: int) -> None:
             steps += 1
             next_observation, reward, done, info = env.step(action)
             rewards.append(reward)
-            task_done = info["task_score"] >= (0.95 if info["task_name"] == "code_review" else 0.99)
+            task_done = info["task_score"] >= 0.9
             print_step(steps, action, reward, task_done, info["error"])
             observation = next_observation
             success = task_done

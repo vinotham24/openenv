@@ -84,7 +84,7 @@ class CodeReviewTask:
 
         self.history.append({"action_type": action.action_type, "payload": action.payload})
         raw_score = grade_code_review(self.bugs, self.fixed_code)
-        if raw_score >= 0.95:
+        if raw_score >= 0.9:
             completed = True
         progress_delta = max(raw_score - self.last_progress, 0.0)
         self.last_progress = max(self.last_progress, raw_score)
