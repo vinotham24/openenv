@@ -5,7 +5,7 @@ from typing import Any, Dict, List
 
 from env.schemas import Action, Observation
 from tasks.code_review.grader import grade_code_review
-from score_utils import MIN_TASK_SCORE, bounded_unit_interval
+from score_utils import MAX_TASK_SCORE, MIN_TASK_SCORE, bounded_unit_interval
 
 
 class CodeReviewTask:
@@ -84,7 +84,7 @@ class CodeReviewTask:
 
         self.history.append({"action_type": action.action_type, "payload": action.payload})
         raw_score = grade_code_review(self.bugs, self.fixed_code)
-        if raw_score >= 0.9:
+        if raw_score >= MAX_TASK_SCORE:
             completed = True
         progress_delta = max(raw_score - self.last_progress, 0.0)
         self.last_progress = max(self.last_progress, raw_score)

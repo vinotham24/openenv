@@ -5,7 +5,7 @@ from typing import Any, Dict, List
 
 from env.schemas import Action, Observation
 from tasks.data_cleaning.grader import EXPECTED_DATA, grade_cleaned_csv
-from score_utils import MIN_TASK_SCORE, bounded_unit_interval
+from score_utils import MAX_TASK_SCORE, MIN_TASK_SCORE, bounded_unit_interval
 
 
 class DataCleaningTask:
@@ -79,7 +79,7 @@ class DataCleaningTask:
 
         self.history.append({"action_type": action.action_type, "payload": action.payload})
         raw_score = grade_cleaned_csv(self.cleaned_csv) if self.cleaned_csv else MIN_TASK_SCORE
-        if raw_score >= 0.9:
+        if raw_score >= MAX_TASK_SCORE:
             completed = True
         progress_delta = max(raw_score - self.last_progress, 0.0)
         self.last_progress = max(self.last_progress, raw_score)

@@ -5,7 +5,7 @@ from typing import Any, Dict, List
 
 from env.schemas import Action, Observation
 from env.utils import load_json
-from score_utils import MIN_TASK_SCORE, bounded_unit_interval
+from score_utils import MAX_TASK_SCORE, MIN_TASK_SCORE, bounded_unit_interval
 from tasks.email_triage.grader import grade_email_triage
 
 
@@ -75,7 +75,7 @@ class EmailTriageTask:
 
         self.history.append({"action_type": action.action_type, "payload": action.payload})
         raw_score = grade_email_triage(self.predictions, self.answers)
-        if len(self.predictions) == len(self.answers) and raw_score >= 0.9:
+        if len(self.predictions) == len(self.answers) and raw_score >= MAX_TASK_SCORE:
             completed = True
         progress_delta = max(raw_score - self.last_progress, 0.0)
         self.last_progress = max(self.last_progress, raw_score)
