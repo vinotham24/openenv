@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
+import uvicorn
 
 app = FastAPI()
 
@@ -65,3 +66,7 @@ def step(action: Action):
 @app.get("/state")
 def state():
     return {"step": current_step}
+
+
+def main():
+    uvicorn.run(app, host="0.0.0.0", port=7860)
