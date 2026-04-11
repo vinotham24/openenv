@@ -16,7 +16,13 @@ RUN_SCORE_SALT = secrets.token_hex(8)
 
 
 def clamp_score(score: float) -> float:
-    return max(min(score, 1 - 1e-6), 1e-6)
+    if score is None or score != score:
+        return MIN_OPENENV_VALUE
+    if score <= 0:
+        return MIN_OPENENV_VALUE
+    if score >= 1:
+        return MAX_OPENENV_VALUE
+    return score
 
 
 def validate_score(score: float) -> float:
