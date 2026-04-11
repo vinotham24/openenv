@@ -2,7 +2,7 @@
 
 from typing import List
 
-from score_utils import bounded_unit_interval
+from score_utils import finalize_score, validate_score
 
 
 BUG_KEYWORDS = ("discount", "tax", "sort")
@@ -10,10 +10,10 @@ BUG_KEYWORDS = ("discount", "tax", "sort")
 
 def score_bug_report(report: List[str]) -> float:
     if not report:
-        return bounded_unit_interval(0.0)
+        return validate_score(0.0)
     text = " ".join(report).lower()
     hits = sum(1 for keyword in BUG_KEYWORDS if keyword in text)
-    return bounded_unit_interval(hits / len(BUG_KEYWORDS))
+    return validate_score(hits / len(BUG_KEYWORDS))
 
 
 def score_fixed_code(code: str) -> float:
@@ -21,7 +21,7 @@ def score_fixed_code(code: str) -> float:
     try:
         exec(compile(code, "candidate.py", "exec"), namespace)
     except Exception:
-        return bounded_unit_interval(0.0)
+        return validate_score(0.0)
 
     try:
         invoice = namespace["calculate_invoice_total"](
@@ -33,15 +33,16 @@ def score_fixed_code(code: str) -> float:
             [{"customer": "Beta"}, {"customer": "Acme"}, {"customer": "Beta"}]
         )
     except Exception:
-        return bounded_unit_interval(0.0)
+        return validate_score(0.0)
 
     score = 0.0
     if invoice == 253.0:
         score += 0.6
     if summary == [("Beta", 2), ("Acme", 1)]:
         score += 0.4
-    return bounded_unit_interval(score)
+    return validate_score(score)
 
 
 def grade_code_review(report: List[str], fixed_code: str) -> float:
-    return bounded_unit_interval((score_bug_report(report) * 0.4) + (score_fixed_code(fixed_code) * 0.6))
+    base_score = (score_bug_report(report) * 0.4) + (score_fixed_code(fixed_code) * 0.6)
+    return finalize_score(base_score, "code_review", report, fixed_code)

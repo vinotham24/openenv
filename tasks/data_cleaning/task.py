@@ -5,7 +5,7 @@ from typing import Any, Dict, List
 
 from env.schemas import Action, Observation
 from tasks.data_cleaning.grader import EXPECTED_DATA, grade_cleaned_csv
-from score_utils import MAX_TASK_SCORE, MIN_TASK_SCORE, bounded_unit_interval
+from score_utils import COMPLETION_SCORE_THRESHOLD, MAX_TASK_SCORE, MIN_TASK_SCORE, validate_score
 
 
 class DataCleaningTask:
@@ -44,7 +44,7 @@ class DataCleaningTask:
             },
             history=self.history,
             hints=["Fill missing purchase_total for row 002.", "Fill missing signup_date for row 004."],
-            progress=bounded_unit_interval(raw_progress),
+            progress=validate_score(raw_progress),
             attempts_remaining=max(max_steps - len(self.history), 0),
         )
 
@@ -79,15 +79,15 @@ class DataCleaningTask:
 
         self.history.append({"action_type": action.action_type, "payload": action.payload})
         raw_score = grade_cleaned_csv(self.cleaned_csv) if self.cleaned_csv else MIN_TASK_SCORE
-        if raw_score >= MAX_TASK_SCORE:
+        if raw_score >= COMPLETION_SCORE_THRESHOLD:
             completed = True
         progress_delta = max(raw_score - self.last_progress, 0.0)
         self.last_progress = max(self.last_progress, raw_score)
         return {
             "valid": valid,
             "completed": completed,
-            "score": bounded_unit_interval(raw_score),
-            "progress_delta": round(progress_delta if valid else 0.0, 4),
+            "score": validate_score(raw_score),
+            "progress_delta": validate_score(progress_delta) if valid and progress_delta > 0 else 0.0,
             "error": error,
             "details": details,
             "message": "Data cleaning step processed.",

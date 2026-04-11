@@ -4,7 +4,7 @@ import csv
 from io import StringIO
 from typing import Dict, List
 
-from score_utils import bounded_unit_interval
+from score_utils import finalize_score
 
 
 EXPECTED_DATA = [
@@ -24,11 +24,11 @@ def parse_csv(text: str) -> List[Dict[str, str]]:
 def grade_cleaned_csv(text: str) -> float:
     rows = parse_csv(text)
     if len(rows) != len(EXPECTED_DATA):
-        return bounded_unit_interval(0.0)
+        return finalize_score(0.0, "data_cleaning", rows, EXPECTED_DATA)
     total = len(EXPECTED_DATA) * len(EXPECTED_DATA[0])
     matched = 0
     for expected, actual in zip(EXPECTED_DATA, rows):
         for key, value in expected.items():
             if actual.get(key) == value:
                 matched += 1
-    return bounded_unit_interval(matched / total)
+    return finalize_score(matched / total, "data_cleaning", rows, EXPECTED_DATA, matched)

@@ -3,7 +3,7 @@
 from dataclasses import dataclass, field
 from typing import Dict, Set
 
-from score_utils import bounded_reward, bounded_unit_interval
+from score_utils import bounded_reward, validate_score
 
 
 @dataclass
@@ -27,7 +27,7 @@ class RewardTracker:
         }
 
         if progress_delta > 0:
-            components["progress"] = bounded_unit_interval(progress_delta)
+            components["progress"] = validate_score(progress_delta)
             raw_reward += components["progress"]
 
         if not valid:
@@ -45,4 +45,4 @@ class RewardTracker:
             raw_reward -= 0.15
 
         self.last_signature = signature
-        return bounded_reward(raw_reward), components
+        return validate_score(bounded_reward(raw_reward)), components

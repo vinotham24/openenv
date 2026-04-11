@@ -5,7 +5,7 @@ from typing import Any, Dict, List
 
 from env.schemas import Action, Observation
 from env.utils import load_json
-from score_utils import MAX_TASK_SCORE, MIN_TASK_SCORE, bounded_unit_interval
+from score_utils import COMPLETION_SCORE_THRESHOLD, MAX_TASK_SCORE, MIN_TASK_SCORE, validate_score
 from tasks.email_triage.grader import grade_email_triage
 
 
@@ -38,7 +38,7 @@ class EmailTriageTask:
             content={"emails": self.emails, "labels": ["spam", "important", "respond"]},
             history=self.history,
             hints=["Use exact labels.", "Urgent internal work is usually important."],
-            progress=bounded_unit_interval(raw_progress),
+            progress=validate_score(raw_progress),
             attempts_remaining=max(max_steps - len(self.history), 0),
         )
 
@@ -75,15 +75,15 @@ class EmailTriageTask:
 
         self.history.append({"action_type": action.action_type, "payload": action.payload})
         raw_score = grade_email_triage(self.predictions, self.answers)
-        if len(self.predictions) == len(self.answers) and raw_score >= MAX_TASK_SCORE:
+        if len(self.predictions) == len(self.answers) and raw_score >= COMPLETION_SCORE_THRESHOLD:
             completed = True
         progress_delta = max(raw_score - self.last_progress, 0.0)
         self.last_progress = max(self.last_progress, raw_score)
         return {
             "valid": valid,
             "completed": completed,
-            "score": bounded_unit_interval(raw_score),
-            "progress_delta": round(progress_delta if valid else 0.0, 4),
+            "score": validate_score(raw_score),
+            "progress_delta": validate_score(progress_delta) if valid and progress_delta > 0 else 0.0,
             "error": error,
             "details": details,
             "message": "Email triage step processed.",

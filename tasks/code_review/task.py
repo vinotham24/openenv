@@ -5,7 +5,7 @@ from typing import Any, Dict, List
 
 from env.schemas import Action, Observation
 from tasks.code_review.grader import grade_code_review
-from score_utils import MAX_TASK_SCORE, MIN_TASK_SCORE, bounded_unit_interval
+from score_utils import COMPLETION_SCORE_THRESHOLD, MAX_TASK_SCORE, MIN_TASK_SCORE, validate_score
 
 
 class CodeReviewTask:
@@ -44,7 +44,7 @@ class CodeReviewTask:
             },
             history=self.history,
             hints=["There are logic bugs in both functions.", "Submit both a bug list and fixed code."],
-            progress=bounded_unit_interval(raw_progress),
+            progress=validate_score(raw_progress),
             attempts_remaining=max(max_steps - len(self.history), 0),
         )
 
@@ -84,15 +84,15 @@ class CodeReviewTask:
 
         self.history.append({"action_type": action.action_type, "payload": action.payload})
         raw_score = grade_code_review(self.bugs, self.fixed_code)
-        if raw_score >= MAX_TASK_SCORE:
+        if raw_score >= COMPLETION_SCORE_THRESHOLD:
             completed = True
         progress_delta = max(raw_score - self.last_progress, 0.0)
         self.last_progress = max(self.last_progress, raw_score)
         return {
             "valid": valid,
             "completed": completed,
-            "score": bounded_unit_interval(raw_score),
-            "progress_delta": round(progress_delta if valid else 0.0, 4),
+            "score": validate_score(raw_score),
+            "progress_delta": validate_score(progress_delta) if valid and progress_delta > 0 else 0.0,
             "error": error,
             "details": details,
             "message": "Code review step processed.",

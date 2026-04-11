@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Tuple
 from env.reward import RewardTracker
 from env.schemas import Action, Observation, Reward
 from env.utils import setup_logger, stable_signature
-from score_utils import bounded_reward, bounded_unit_interval
+from score_utils import bounded_reward, validate_score
 from tasks.code_review.task import CodeReviewTask
 from tasks.data_cleaning.task import DataCleaningTask
 from tasks.email_triage.task import EmailTriageTask
@@ -35,7 +35,7 @@ class OpenEnvRealWorldSim:
         self.current_task = None
         self.current_step = 0
         self.done = False
-        self.cumulative_reward = bounded_reward(0.0)
+        self.cumulative_reward = validate_score(bounded_reward(0.0))
         self.reward_tracker = RewardTracker()
 
     def reset(self) -> Observation:
@@ -44,7 +44,7 @@ class OpenEnvRealWorldSim:
         self.current_task.reset()
         self.current_step = 0
         self.done = False
-        self.cumulative_reward = bounded_reward(0.0)
+        self.cumulative_reward = validate_score(bounded_reward(0.0))
         self.reward_tracker = RewardTracker()
         return self.current_task.observation(self.max_steps_per_task)
 
@@ -68,17 +68,17 @@ class OpenEnvRealWorldSim:
         )
 
         reward = Reward(
-            value=reward_value,
+            value=validate_score(reward_value),
             components=components,
             message=result["message"],
         )
-        self.cumulative_reward = bounded_unit_interval(self.cumulative_reward + (reward.value - 0.5))
+        self.cumulative_reward = validate_score(self.cumulative_reward + (reward.value - 0.5))
 
         info = {
             "task_id": self.current_task.task_id,
             "task_name": self.current_task.task_name,
             "difficulty": self.current_task.difficulty,
-            "task_score": result["score"],
+            "task_score": validate_score(result["score"]),
             "error": result["error"],
             "details": result["details"],
             "reward": reward.model_dump(),
@@ -99,11 +99,11 @@ class OpenEnvRealWorldSim:
                 content={"state": self.state()},
                 history=[],
                 hints=[],
-                progress=bounded_unit_interval(1.0),
+                progress=validate_score(1.0),
                 attempts_remaining=0,
             )
         )
-        return observation, reward.value, self.done, info
+        return observation, validate_score(reward.value), self.done, info
 
     def state(self) -> Dict[str, Any]:
         snapshot = EnvironmentSnapshot(

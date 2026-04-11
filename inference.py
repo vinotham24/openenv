@@ -9,7 +9,7 @@ from openai import OpenAI
 from env.base_env import OpenEnvRealWorldSim
 from env.schemas import Action
 from env.utils import lowercase_bool
-from score_utils import MAX_TASK_SCORE
+from score_utils import COMPLETION_SCORE_THRESHOLD
 from tasks.data_cleaning.grader import EXPECTED_DATA
 
 
@@ -168,7 +168,7 @@ def run_task(task_index: int) -> None:
             steps += 1
             next_observation, reward, done, info = env.step(action)
             rewards.append(reward)
-            task_done = info["task_score"] >= MAX_TASK_SCORE
+            task_done = info["task_score"] >= COMPLETION_SCORE_THRESHOLD
             print_step(steps, action, reward, task_done, info["error"])
             observation = next_observation
             success = task_done

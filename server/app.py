@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 import uvicorn
 
-from score_utils import MAX_TASK_SCORE, bounded_reward, bounded_unit_interval
+from score_utils import COMPLETION_SCORE_THRESHOLD, MAX_TASK_SCORE, bounded_reward, validate_score
 from tasks.email_triage.grader import grade_email_triage
 from tasks.data_cleaning.grader import grade_cleaned_csv
 from tasks.code_review.grader import grade_code_review
@@ -76,8 +76,8 @@ def reset():
     submitted_fixed_code = ""
     return {
         "observation": {"task": "email_triage", "step": current_step},
-        "task_score": bounded_unit_interval(0.0),
-        "reward": bounded_reward(0.0),
+        "task_score": validate_score(0.0),
+        "reward": validate_score(bounded_reward(0.0)),
         "done": False,
     }
 
@@ -87,8 +87,8 @@ def step(action: Action):
     global current_step, email_predictions, cleaned_csv, submitted_bugs, submitted_fixed_code
 
     current_step += 1
-    reward = bounded_reward(0.0)
-    task_score = bounded_unit_interval(0.0)
+    reward = validate_score(bounded_reward(0.0))
+    task_score = validate_score(0.0)
     done = False
     observation: dict = {}
 
@@ -102,8 +102,8 @@ def step(action: Action):
             email_predictions = [p for p in email_predictions if p.get("id") != email_id]
             email_predictions.append({"id": email_id, "label": label})
         raw = grade_email_triage(email_predictions, EMAIL_ANSWERS)
-        task_score = bounded_unit_interval(raw)
-        reward = bounded_reward(raw)
+        task_score = validate_score(raw)
+        reward = validate_score(bounded_reward(raw))
         done = len(email_predictions) >= len(EMAIL_ANSWERS)
         observation = {"classified": email_id, "label": label}
 
@@ -112,9 +112,9 @@ def step(action: Action):
         if csv_text:
             cleaned_csv = csv_text.strip()
         raw = grade_cleaned_csv(cleaned_csv) if cleaned_csv else 0.0
-        task_score = bounded_unit_interval(raw)
-        reward = bounded_reward(raw)
-        done = raw >= MAX_TASK_SCORE
+        task_score = validate_score(raw)
+        reward = validate_score(bounded_reward(raw))
+        done = raw >= COMPLETION_SCORE_THRESHOLD
         observation = {"rows_submitted": len(cleaned_csv.splitlines()) - 1 if cleaned_csv else 0}
 
     elif action_type == "review_code":
@@ -125,9 +125,9 @@ def step(action: Action):
         if fixed_code:
             submitted_fixed_code = fixed_code.strip()
         raw = grade_code_review(submitted_bugs, submitted_fixed_code)
-        task_score = bounded_unit_interval(raw)
-        reward = bounded_reward(raw)
-        done = raw >= MAX_TASK_SCORE
+        task_score = validate_score(raw)
+        reward = validate_score(bounded_reward(raw))
+        done = raw >= COMPLETION_SCORE_THRESHOLD
         observation = {"bugs_reported": len(submitted_bugs)}
 
     elif action_type == "submit":
@@ -136,18 +136,18 @@ def step(action: Action):
         data_raw = grade_cleaned_csv(cleaned_csv) if cleaned_csv else 0.0
         code_raw = grade_code_review(submitted_bugs, submitted_fixed_code)
         best = max(email_raw, data_raw, code_raw)
-        task_score = bounded_unit_interval(best)
-        reward = bounded_reward(best)
+        task_score = validate_score(best)
+        reward = validate_score(bounded_reward(best))
         observation = {"submitted": True}
 
     elif action_type == "analyze":
-        task_score = bounded_unit_interval(0.5)
-        reward = bounded_reward(0.1)
+        task_score = validate_score(0.5)
+        reward = validate_score(bounded_reward(0.1))
         observation = {"analysis": "Inspected task inputs."}
 
     else:
-        task_score = bounded_unit_interval(0.0)
-        reward = bounded_reward(0.0)
+        task_score = validate_score(0.0)
+        reward = validate_score(bounded_reward(0.0))
         observation = {"error": f"unknown action_type: {action_type}"}
 
     return {
