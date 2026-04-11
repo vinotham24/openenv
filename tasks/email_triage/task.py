@@ -5,7 +5,7 @@ from typing import Any, Dict, List
 
 from env.schemas import Action, Observation
 from env.utils import load_json
-from score_utils import COMPLETION_SCORE_THRESHOLD, MAX_TASK_SCORE, MIN_TASK_SCORE, validate_score
+from score_utils import COMPLETION_SCORE_THRESHOLD, MIN_TASK_SCORE, validate_score
 from tasks.email_triage.grader import grade_email_triage
 
 
@@ -34,10 +34,21 @@ class EmailTriageTask:
             task_id=self.task_id,
             task_name=self.task_name,
             difficulty=self.difficulty,
-            instruction="Classify each incoming email as spam, important, or respond.",
-            content={"emails": self.emails, "labels": ["spam", "important", "respond"]},
+            instruction="Triage the logistics operations inbox. Label each message as spam, important, or respond.",
+            content={
+                "emails": self.emails,
+                "labels": ["spam", "important", "respond"],
+                "policy_notes": [
+                    "Important means the issue should be escalated or reviewed immediately even if no reply is needed yet.",
+                    "Respond means a human reply or operational decision is needed, but it is not an executive escalation.",
+                    "Spam includes spoofed domains, credential harvesting, and untrusted payment-change requests.",
+                ],
+            },
             history=self.history,
-            hints=["Use exact labels.", "Urgent internal work is usually important."],
+            hints=[
+                "Trusted sender alone is not enough; use the requested action and business impact.",
+                "Operational questions from partners usually need a reply even if they mention urgency.",
+            ],
             progress=validate_score(raw_progress),
             attempts_remaining=max(max_steps - len(self.history), 0),
         )

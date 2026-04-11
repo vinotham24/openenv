@@ -5,7 +5,7 @@ from typing import Any, Dict, List
 
 from env.schemas import Action, Observation
 from tasks.data_cleaning.grader import EXPECTED_DATA, grade_cleaned_csv
-from score_utils import COMPLETION_SCORE_THRESHOLD, MAX_TASK_SCORE, MIN_TASK_SCORE, validate_score
+from score_utils import COMPLETION_SCORE_THRESHOLD, MIN_TASK_SCORE, validate_score
 
 
 class DataCleaningTask:
@@ -31,19 +31,40 @@ class DataCleaningTask:
             task_id=self.task_id,
             task_name=self.task_name,
             difficulty=self.difficulty,
-            instruction="Clean the CSV by filling missing values and normalizing dates, countries, amounts, and status values.",
+            instruction="Normalize the shipment exception feed and derive the routing actions required by operations.",
             content={
                 "raw_csv": self.raw_csv,
                 "schema": list(EXPECTED_DATA[0].keys()),
+                "reference_data": {
+                    "carrier_aliases": {
+                        "px logistics": "Polar Express",
+                        "relay freight": "Relay Freight",
+                        "northstar secure": "NorthStar Secure",
+                    },
+                    "risk_rules": [
+                        "cold routes trigger temperature risk when temp_probe_c > 5",
+                        "high_value routes trigger security risk when the seal is broken",
+                        "any route with delay_hours >= 4 triggers delay risk if no higher-priority trigger applies",
+                    ],
+                    "priority_rules": [
+                        "critical if security risk exists",
+                        "critical if temperature risk exists and delay_hours >= 2",
+                        "high if customs paperwork is missing or delay_hours >= 4",
+                        "otherwise monitor",
+                    ],
+                },
                 "requirements": [
-                    "Dates must be YYYY-MM-DD.",
-                    "Countries must be normalized.",
-                    "purchase_total must have two decimal places.",
-                    "status must be lowercase.",
+                    "Output columns must exactly match the schema order.",
+                    "delay_hours must be formatted with one decimal place.",
+                    "owner_action and resolution_tag must reflect the derived trigger and note context.",
+                    "Normalize carrier aliases before deriving downstream fields.",
                 ],
             },
             history=self.history,
-            hints=["Fill missing purchase_total for row 002.", "Fill missing signup_date for row 004."],
+            hints=[
+                "Compute delay from planned and latest ETA instead of copying the timestamps.",
+                "Customs-related notes change the final action even when the primary trigger is delay.",
+            ],
             progress=validate_score(raw_progress),
             attempts_remaining=max(max_steps - len(self.history), 0),
         )

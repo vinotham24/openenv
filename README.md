@@ -9,7 +9,7 @@ tags:
 
 ## Overview and motivation
 
-`openenv-realworld-sim` is a production-grade OpenEnv-compatible benchmark for evaluating LLM agents on realistic human workflows instead of toy tasks or games. It focuses on common operational and engineering work: triaging email, cleaning messy business data, and reviewing buggy code.
+`openenv-realworld-sim` is a production-grade OpenEnv-compatible benchmark for evaluating LLM agents on realistic human workflows instead of toy tasks or games. It focuses on operational decisions in a logistics setting: triaging exception inboxes, normalizing noisy shipment feeds, and debugging a shipment-risk review pipeline.
 
 The motivation is to measure whether an agent can make incremental, safe, useful progress on real-world tasks with structured observations, typed actions, deterministic graders, and step-wise rewards.
 
@@ -53,15 +53,15 @@ Supported action types:
 
 ### Easy: Email Triage
 
-The agent receives realistic business emails and must classify each one as `spam`, `important`, or `respond`.
+The agent triages a noisy logistics operations inbox and must distinguish phishing, escalation-worthy incidents, and messages that require a direct operational reply.
 
 ### Medium: Data Cleaning
 
-The agent receives a messy CSV and must fill missing values, normalize date formats, normalize categorical fields, and standardize numeric formatting.
+The agent receives a messy shipment exception feed plus business rules and must derive normalized routing actions, priorities, and owners.
 
 ### Hard: Code Review
 
-The agent receives a buggy Python file and must identify the logic defects and submit corrected code.
+The agent reviews a buggy shipment-risk review pipeline, identifies failure modes, and submits corrected production-ready code.
 
 ## Setup instructions
 
@@ -140,11 +140,11 @@ This repository is ready for containerized deployment on Hugging Face Spaces.
 
 ## Baseline scores
 
-Representative baseline scores:
+Representative heuristic baseline scores:
 
-- `email_triage`: `0.99`
-- `data_cleaning`: `0.99`
-- `code_review`: `0.99`
+- `email_triage`: `~0.50`
+- `data_cleaning`: `~0.40`
+- `code_review`: `~0.23`
 
 Progress and task scores are clamped into the OpenEnv-safe interval via [`score_utils.py`](/c:/Users/Nivedha%20S/Downloads/hack/openenv-realworld-sim/score_utils.py), so values stay within `(0, 1)` and are normalized to `0.01..0.99`. The graders also apply a tiny per-run jitter tied to the submission content, which keeps scoring meaningful while avoiding perfectly identical outputs across runs.
 

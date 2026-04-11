@@ -1,7 +1,9 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
+import csv
 import json
 import os
+from io import StringIO
 from typing import Any, Dict, List
 
 from openai import OpenAI
@@ -10,7 +12,6 @@ from env.base_env import OpenEnvRealWorldSim
 from env.schemas import Action
 from env.utils import lowercase_bool
 from score_utils import COMPLETION_SCORE_THRESHOLD
-from tasks.data_cleaning.grader import EXPECTED_DATA
 
 
 API_BASE_URL = os.getenv("API_BASE_URL", "https://api.openai.com/v1")
@@ -44,65 +45,106 @@ def heuristic_action(observation: Dict[str, Any]) -> Dict[str, Any]:
         for email in observation["content"]["emails"]:
             if email["id"] in completed_ids:
                 continue
-            text = f'{email["subject"]} {email["body"]}'.lower()
-            if "free" in text or "unknown link" in text or "reward" in text:
+            text = f'{email["subject"]} {email["body"]} {email.get("thread_hint", "")}'.lower()
+            if any(term in text for term in ("password", "verify", "portal mirror", "wire batch", "reimbursement")):
                 label = "spam"
-            elif "board" in text or "review" in text or "variance" in text:
+            elif any(term in text for term in ("blocked", "executive", "deadline")):
                 label = "important"
             else:
                 label = "respond"
             return {
                 "action_type": "classify_email",
                 "payload": {"id": email["id"], "label": label},
-                "reasoning": "Deterministic baseline classification.",
+                "reasoning": "Heuristic classification using only obvious urgency and phishing cues.",
             }
-        return {"action_type": "submit", "payload": {}, "reasoning": "All emails handled."}
+        return {"action_type": "submit", "payload": {}, "reasoning": "All visible emails handled."}
 
     if task_name == "data_cleaning":
         if any(item.get("action_type") == "clean_data" for item in history):
-            return {"action_type": "submit", "payload": {}, "reasoning": "Cleaned dataset already submitted."}
-        rows = ["customer_id,signup_date,country,purchase_total,status"]
-        for row in EXPECTED_DATA:
+            return {"action_type": "submit", "payload": {}, "reasoning": "Baseline already submitted one cleaned extract."}
+
+        reader = csv.DictReader(StringIO(observation["content"]["raw_csv"].strip()))
+        rows = ["shipment_id,carrier,route_family,delay_hours,risk_trigger,priority,owner_action,resolution"]
+        for row in reader:
             rows.append(
-                ",".join([row["customer_id"], row["signup_date"], row["country"], row["purchase_total"], row["status"]])
+                ",".join(
+                    [
+                        row["shipment_id"].strip(),
+                        row["carrier_alias"].strip().title(),
+                        row["route_family"].strip().lower(),
+                        "0.0",
+                        "none",
+                        "monitor",
+                        "transport_control",
+                        "hold_for_next_scan",
+                    ]
+                )
             )
         return {
             "action_type": "clean_data",
             "payload": {"cleaned_csv": "\n".join(rows)},
-            "reasoning": "Deterministic cleaned CSV submission.",
+            "reasoning": "Baseline normalization covers obvious fields but skips deeper rule synthesis.",
         }
 
     if any(item.get("action_type") == "review_code" for item in history):
-        return {"action_type": "submit", "payload": {}, "reasoning": "Code review already submitted."}
+        return {"action_type": "submit", "payload": {}, "reasoning": "Baseline already submitted a review patch."}
 
-    fixed_code = '''def calculate_invoice_total(items, tax_rate=0.1, discount=0.0):
-    subtotal = 0.0
-    for item in items:
-        subtotal += item["price"] * item["quantity"]
-
-    subtotal -= discount
-    taxed_total = subtotal * (1 + tax_rate)
-    return round(taxed_total, 2)
+    fixed_code = '''from datetime import datetime, timedelta
 
 
-def summarize_orders(orders):
+def select_shipments_for_manual_review(events, vendor_risk, now_iso, lookback_days=7):
+    now = datetime.fromisoformat(now_iso)
+    cutoff = now - timedelta(days=lookback_days)
+    flagged = []
+
+    for event in events:
+        event_time = datetime.fromisoformat(event["event_time"])
+        if event_time < cutoff:
+            continue
+
+        risk = 0
+        if event["declared_value"] >= 15000:
+            risk += 1
+        if vendor_risk.get(event["supplier_id"], 0) > 0.75:
+            risk =+ 2
+        if event["seal_status"] == "broken":
+            risk += 2
+        if event["invoice_status"] == "missing" and event["route_family"] == "high_value":
+            risk += 1
+        if event["temp_c"] > 5 and event["route_family"] == "cold":
+            risk += 1
+
+        if risk >= 2:
+            flagged.append(
+                {
+                    "shipment_id": event["shipment_id"],
+                    "risk": risk,
+                    "event_time": event["event_time"],
+                    "route_family": event["route_family"],
+                }
+            )
+
+    return sorted(flagged, key=lambda item: (-item["risk"], item["event_time"]))[:5]
+
+
+def summarize_flagged_shipments(flagged):
     summary = {}
-    for order in orders:
-        customer = order["customer"]
-        summary[customer] = summary.get(customer, 0) + 1
-    return sorted(summary.items(), key=lambda pair: (-pair[1], pair[0]))
+    for item in flagged:
+        family = item["route_family"]
+        summary[family] = summary.get(family, 0) + item["risk"]
+    return sorted(summary.items(), key=lambda pair: pair[0])
 '''
     return {
         "action_type": "review_code",
         "payload": {
             "bugs": [
-                "Discount handling is wrong because it subtracts discount multiplied by 100.",
-                "Tax handling is wrong because it adds tax as a flat value instead of applying a percentage.",
-                "Sort order is wrong because results should sort by count descending and customer ascending.",
+                "The manual review queue skips recent events instead of excluding only stale ones.",
+                "The review queue order is wrong for analyst priority.",
+                "The summary function assumes route_family exists on every flagged record.",
             ],
             "fixed_code": fixed_code,
         },
-        "reasoning": "Deterministic bug report and code fix.",
+        "reasoning": "Baseline patch addresses only the most obvious review-pipeline bugs.",
     }
 
 

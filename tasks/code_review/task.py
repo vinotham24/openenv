@@ -5,7 +5,7 @@ from typing import Any, Dict, List
 
 from env.schemas import Action, Observation
 from tasks.code_review.grader import grade_code_review
-from score_utils import COMPLETION_SCORE_THRESHOLD, MAX_TASK_SCORE, MIN_TASK_SCORE, validate_score
+from score_utils import COMPLETION_SCORE_THRESHOLD, MIN_TASK_SCORE, validate_score
 
 
 class CodeReviewTask:
@@ -33,17 +33,21 @@ class CodeReviewTask:
             task_id=self.task_id,
             task_name=self.task_name,
             difficulty=self.difficulty,
-            instruction="Review the Python file, identify the defects, and provide corrected code.",
+            instruction="Review the shipment-risk review pipeline, identify the defects, and provide corrected production-ready code.",
             content={
                 "buggy_code": self.buggy_code,
                 "expected_behavior": [
-                    "Discount should subtract the actual amount.",
-                    "Tax should be applied as a percentage.",
-                    "Order summaries should sort by count descending and customer ascending.",
+                    "Only shipments inside the lookback window should be reviewed.",
+                    "Supplier risk should accumulate with other signals instead of overwriting them.",
+                    "Manual review output must rank highest-risk shipments first and preserve route_family for summaries.",
+                    "Summary output should aggregate total risk by route family.",
                 ],
             },
             history=self.history,
-            hints=["There are logic bugs in both functions.", "Submit both a bug list and fixed code."],
+            hints=[
+                "There are defects in time filtering, risk accumulation, ranking, and downstream summary data.",
+                "Submit both a structured bug list and corrected code.",
+            ],
             progress=validate_score(raw_progress),
             attempts_remaining=max(max_steps - len(self.history), 0),
         )

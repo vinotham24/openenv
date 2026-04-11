@@ -1,25 +1,82 @@
-﻿{
+{
   "emails": [
     {
       "id": "email-001",
-      "from": "finance-director@acme.example",
-      "subject": "Board meeting numbers needed by 5 PM",
-      "body": "Please review the Q2 variance sheet and send your summary before the board packet closes.",
+      "from": "customsdesk@harbor-broker.example",
+      "subject": "Container C-882 held until battery declaration is corrected",
+      "body": "Port ops tagged pallet 14A for manual review. Demurrage starts after 14:00 local if we do not send the corrected HS code and lithium declaration.",
+      "thread_hint": "Trusted customs broker handling inbound electronics.",
+      "noise": {
+        "ticket_ref": "CB-1182",
+        "last_auto_tag": "docs_pending",
+        "sent_via_mobile": false
+      },
       "label": "important"
     },
     {
       "id": "email-002",
-      "from": "promo@untrusted-offers.example",
-      "subject": "Claim your free tablet today!!!",
-      "body": "Limited time reward. Click the unknown link now to confirm shipping and payment details.",
+      "from": "finance-team@acme-payables.co",
+      "subject": "Re: supplier bank change confirmation form",
+      "body": "A supplier payment update is waiting. Verify the account in the attached portal mirror before the wire batch closes.",
+      "thread_hint": "Sender domain is not in the approved vendor directory.",
+      "noise": {
+        "ticket_ref": "EXT-441",
+        "last_auto_tag": "vendor_update",
+        "sent_via_mobile": true
+      },
       "label": "spam"
     },
     {
       "id": "email-003",
-      "from": "customer-success@northwind.example",
-      "subject": "Customer asking for status update",
-      "body": "The client is blocked on your reply. Please send a shipment ETA and whether replacement stock is available.",
+      "from": "retail-ops@northmarket.example",
+      "subject": "Store 44 remains blocked waiting on replacement ETA",
+      "body": "The manager already shared photos of the damaged cases. Please reply with whether replacement yogurt can ship tonight and if we should keep the aisle signage up.",
+      "thread_hint": "Existing customer thread with open service case.",
+      "noise": {
+        "ticket_ref": "CS-7781",
+        "last_auto_tag": "customer_followup",
+        "sent_via_mobile": false
+      },
       "label": "respond"
+    },
+    {
+      "id": "email-004",
+      "from": "coldchain-monitor@northline.example",
+      "subject": "Lane CL-7 recorded repeated excursions after auto-recovery",
+      "body": "Overnight telemetry shows three temperature spikes on the same lane. Stores accepted product, but the pattern suggests the reefer unit is drifting and outbound loads may need to pause.",
+      "thread_hint": "Automated digest routed from the monitoring service.",
+      "noise": {
+        "ticket_ref": "MON-204",
+        "last_auto_tag": "resolved_digest",
+        "sent_via_mobile": false
+      },
+      "label": "important"
+    },
+    {
+      "id": "email-005",
+      "from": "dispatch@eastbridge-carrier.example",
+      "subject": "Need depot decision after tunnel closure on route NE-17",
+      "body": "Driver can still make delivery if we reroute through Albany, but we need your reply on whether to swap trailers or hold the load until morning.",
+      "thread_hint": "Trusted carrier dispatcher asking for an operational decision.",
+      "noise": {
+        "ticket_ref": "OPS-643",
+        "last_auto_tag": "carrier_question",
+        "sent_via_mobile": true
+      },
+      "label": "respond"
+    },
+    {
+      "id": "email-006",
+      "from": "expenses@rebate-portal-help.example",
+      "subject": "Expense reimbursement rejected, password re-entry required",
+      "body": "Your claim is on hold. Re-enter your password and payroll ID in the secure reimbursement mirror to avoid cancellation.",
+      "thread_hint": "No matching internal reimbursement system record.",
+      "noise": {
+        "ticket_ref": "RB-912",
+        "last_auto_tag": "expense_portal",
+        "sent_via_mobile": false
+      },
+      "label": "spam"
     }
   ]
 }

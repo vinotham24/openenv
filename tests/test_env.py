@@ -31,8 +31,8 @@ def test_step_returns_expected_tuple() -> None:
     assert reward > 0.5
     assert done is False
     assert MIN_OPENENV_VALUE <= info["task_score"] <= MAX_OPENENV_VALUE
-    assert info["task_score"] > 0.3
-    assert info["task_score"] < 0.35
+    assert info["task_score"] > 0.15
+    assert info["task_score"] < 0.2
 
 
 def test_reward_penalizes_invalid_action() -> None:
@@ -108,15 +108,18 @@ def test_graders_depend_on_submission_quality() -> None:
     strong_csv_score = grade_cleaned_csv(
         "\n".join(
             [
-                "customer_id,signup_date,country,purchase_total,status",
+                "shipment_id,carrier,route_family,delay_hours,risk_trigger,priority,owner_action,resolution_tag",
                 *[
                     ",".join(
                         [
-                            row["customer_id"],
-                            row["signup_date"],
-                            row["country"],
-                            row["purchase_total"],
-                            row["status"],
+                            row["shipment_id"],
+                            row["carrier"],
+                            row["route_family"],
+                            row["delay_hours"],
+                            row["risk_trigger"],
+                            row["priority"],
+                            row["owner_action"],
+                            row["resolution_tag"],
                         ]
                     )
                     for row in EXPECTED_DATA
@@ -129,25 +132,55 @@ def test_graders_depend_on_submission_quality() -> None:
     weak_code_score = grade_code_review([], "")
     strong_code_score = grade_code_review(
         [
-            "Discount handling is wrong because it subtracts discount multiplied by 100.",
-            "Tax handling is wrong because it adds tax as a flat value instead of applying a percentage.",
-            "Sort order is wrong because results should sort by count descending and customer ascending.",
+            "The cutoff window is reversed, so recent shipments are skipped while stale events are reviewed.",
+            "Supplier risk is overwritten instead of accumulated with the other signals.",
+            "Manual review output should sort highest-risk shipments first.",
+            "The summary path needs route_family preserved on each flagged shipment.",
         ],
-        """def calculate_invoice_total(items, tax_rate=0.1, discount=0.0):
-    subtotal = 0.0
-    for item in items:
-        subtotal += item["price"] * item["quantity"]
-    subtotal -= discount
-    taxed_total = subtotal * (1 + tax_rate)
-    return round(taxed_total, 2)
+        """from datetime import datetime, timedelta
 
 
-def summarize_orders(orders):
+def select_shipments_for_manual_review(events, vendor_risk, now_iso, lookback_days=7):
+    now = datetime.fromisoformat(now_iso)
+    cutoff = now - timedelta(days=lookback_days)
+    flagged = []
+
+    for event in events:
+        event_time = datetime.fromisoformat(event["event_time"])
+        if event_time < cutoff:
+            continue
+
+        risk = 0
+        if event["declared_value"] >= 15000:
+            risk += 1
+        if vendor_risk.get(event["supplier_id"], 0) > 0.75:
+            risk += 2
+        if event["seal_status"] == "broken":
+            risk += 2
+        if event["invoice_status"] == "missing" and event["route_family"] == "high_value":
+            risk += 1
+        if event["temp_c"] > 5 and event["route_family"] == "cold":
+            risk += 1
+
+        if risk >= 2:
+            flagged.append(
+                {
+                    "shipment_id": event["shipment_id"],
+                    "risk": risk,
+                    "event_time": event["event_time"],
+                    "route_family": event["route_family"],
+                }
+            )
+
+    return sorted(flagged, key=lambda item: (-item["risk"], item["event_time"]))[:5]
+
+
+def summarize_flagged_shipments(flagged):
     summary = {}
-    for order in orders:
-        customer = order["customer"]
-        summary[customer] = summary.get(customer, 0) + 1
-    return sorted(summary.items(), key=lambda pair: (-pair[1], pair[0]))
+    for item in flagged:
+        family = item["route_family"]
+        summary[family] = summary.get(family, 0) + item["risk"]
+    return sorted(summary.items(), key=lambda pair: pair[0])
 """,
     )
     assert MIN_OPENENV_VALUE <= weak_code_score < strong_code_score <= MAX_OPENENV_VALUE

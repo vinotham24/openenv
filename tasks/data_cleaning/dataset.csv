@@ -1,6 +1,5 @@
-﻿customer_id,signup_date,country,purchase_total,status
-001,2026/01/05, usa ,1200.5,active
-002,05-02-2026,India,,ACTIVE
-003,2026-03-11,uk,980.00,inactive
-004,,United States, 450 ,Active
-005,2026.04.01, india,610.75,active
+shipment_id,route_family,carrier_alias,planned_eta_local,latest_eta_local,temp_probe_c,seal_check,exception_note
+SH-201,cold,px logistics,2026-04-08 13:00,2026/04/08 15:30,6.8,ok,Store reported softened yogurt on unload
+SH-202,ambient,relay freight,2026-04-09 09:00,2026-04-09 10:15,28.0,ok,Dock queue due to staffing
+SH-203,high_value,NorthStar Secure,2026-04-09 18:00,2026-04-10 00:30,19.5,broken,Seal mismatch at cross-dock; customs note pending
+SH-204,ambient,relay freight,2026-04-10 06:00,2026-04-10 11:00,31.2,ok,Customs paperwork missing for bonded transfer
