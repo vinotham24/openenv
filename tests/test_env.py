@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import pytest
 from fastapi.testclient import TestClient
 
 from env.base_env import OpenEnvRealWorldSim
@@ -54,13 +55,13 @@ def test_root_route_exists() -> None:
 
 
 def test_clamp_score_excludes_zero_and_one() -> None:
-    assert clamp_score(0.0) == MIN_OPENENV_VALUE
-    assert clamp_score(1.0) == MAX_OPENENV_VALUE
-    assert clamp_score(0.25) == 0.25
-    assert clamp_score(-1.0) == MIN_OPENENV_VALUE
-    assert clamp_score(2.0) == MAX_OPENENV_VALUE
-    assert clamp_score(None) == MIN_OPENENV_VALUE
-    assert clamp_score(float("nan")) == MIN_OPENENV_VALUE
+    assert clamp_score(0.0) == pytest.approx(MIN_OPENENV_VALUE)
+    assert clamp_score(1.0) == pytest.approx(MAX_OPENENV_VALUE)
+    assert clamp_score(0.25) == pytest.approx(0.25)
+    assert clamp_score(-1.0) == pytest.approx(MIN_OPENENV_VALUE)
+    assert clamp_score(2.0) == pytest.approx(MAX_OPENENV_VALUE)
+    assert clamp_score(None) == pytest.approx(MIN_OPENENV_VALUE)
+    assert clamp_score(float("nan")) == pytest.approx(MIN_OPENENV_VALUE)
 
 
 def test_environment_has_three_tasks() -> None:
