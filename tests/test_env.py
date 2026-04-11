@@ -16,7 +16,7 @@ def test_reset_returns_observation() -> None:
     observation = env.reset()
     assert observation.task_name == "email_triage"
     assert MIN_OPENENV_VALUE <= observation.progress <= MAX_OPENENV_VALUE
-    assert observation.progress < 0.01
+    assert observation.progress <= 0.02
     assert observation.attempts_remaining == 6
 
 

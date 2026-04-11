@@ -5,12 +5,12 @@ import json
 import secrets
 from typing import Any
 
-MIN_OPENENV_VALUE = 1e-6
-MAX_OPENENV_VALUE = 1 - 1e-6
+MIN_OPENENV_VALUE = 0.01
+MAX_OPENENV_VALUE = 0.99
 NEUTRAL_REWARD = 0.5
 MIN_TASK_SCORE = MIN_OPENENV_VALUE
 MAX_TASK_SCORE = MAX_OPENENV_VALUE
-COMPLETION_SCORE_THRESHOLD = 0.99
+COMPLETION_SCORE_THRESHOLD = 0.98
 MAX_SCORE_JITTER = 0.002
 RUN_SCORE_SALT = secrets.token_hex(8)
 
@@ -22,7 +22,7 @@ def clamp_score(score: float) -> float:
         return MIN_OPENENV_VALUE
     if score >= 1:
         return MAX_OPENENV_VALUE
-    return score
+    return max(min(score, MAX_OPENENV_VALUE), MIN_OPENENV_VALUE)
 
 
 def validate_score(score: float) -> float:

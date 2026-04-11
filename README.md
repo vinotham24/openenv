@@ -142,10 +142,10 @@ This repository is ready for containerized deployment on Hugging Face Spaces.
 
 Representative baseline scores:
 
-- `email_triage`: `0.999999`
-- `data_cleaning`: `0.999999`
-- `code_review`: `0.999999`
+- `email_triage`: `0.99`
+- `data_cleaning`: `0.99`
+- `code_review`: `0.99`
 
-Progress and task scores are clamped into the OpenEnv-safe interval via [`score_utils.py`](/c:/Users/Nivedha%20S/Downloads/hack/openenv-realworld-sim/score_utils.py), so values stay within `(0, 1)` and are normalized to `0.000001..0.999999`. The graders also apply a tiny per-run jitter tied to the submission content, which keeps scoring meaningful while avoiding perfectly identical outputs across runs.
+Progress and task scores are clamped into the OpenEnv-safe interval via [`score_utils.py`](/c:/Users/Nivedha%20S/Downloads/hack/openenv-realworld-sim/score_utils.py), so values stay within `(0, 1)` and are normalized to `0.01..0.99`. The graders also apply a tiny per-run jitter tied to the submission content, which keeps scoring meaningful while avoiding perfectly identical outputs across runs.
 
 The benchmark is lightweight and runs comfortably within 2 vCPU and 8 GB RAM constraints.
