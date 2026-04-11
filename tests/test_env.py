@@ -54,6 +54,32 @@ def test_root_route_exists() -> None:
     assert body["routes"]["docs"] == "/docs"
 
 
+def test_reset_route_returns_full_observation() -> None:
+    client = TestClient(app)
+    response = client.post("/reset")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["observation"]["task_id"] == "email_triage"
+    assert MIN_OPENENV_VALUE <= body["task_score"] <= MAX_OPENENV_VALUE
+    assert body["info"]["details"]["reset"] is True
+
+
+def test_step_route_returns_full_info() -> None:
+    client = TestClient(app)
+    client.post("/reset")
+    response = client.post(
+        "/step",
+        json={"action_type": "classify_email", "payload": {"id": "email-001", "label": "important"}},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["observation"]["task_id"] == "email_triage"
+    assert MIN_OPENENV_VALUE <= body["task_score"] <= MAX_OPENENV_VALUE
+    assert "reward" in body["info"]
+
+
 def test_clamp_score_excludes_zero_and_one() -> None:
     assert clamp_score(0.0) == pytest.approx(MIN_OPENENV_VALUE)
     assert clamp_score(1.0) == pytest.approx(MAX_OPENENV_VALUE)

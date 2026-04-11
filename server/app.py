@@ -1,38 +1,31 @@
 from __future__ import annotations
 
+from typing import Any
+
 from fastapi import FastAPI
-from pydantic import BaseModel
 import uvicorn
 
-from score_utils import COMPLETION_SCORE_THRESHOLD, MAX_TASK_SCORE, bounded_reward, validate_score
-from tasks.email_triage.grader import grade_email_triage
-from tasks.data_cleaning.grader import grade_cleaned_csv
-from tasks.code_review.grader import grade_code_review
+from env.base_env import OpenEnvRealWorldSim
+from env.schemas import Action
+from score_utils import validate_score
 
 app = FastAPI()
-
-# ── Email triage state ────────────────────────────────────────────────────────
-EMAIL_ANSWERS = {
-    "email-001": "important",
-    "email-002": "spam",
-    "email-003": "respond",
-}
-email_predictions: list[dict] = []
-
-# ── Data cleaning state ───────────────────────────────────────────────────────
-cleaned_csv: str = ""
-
-# ── Code review state ─────────────────────────────────────────────────────────
-submitted_bugs: list[str] = []
-submitted_fixed_code: str = ""
-
-# ── Step counter ──────────────────────────────────────────────────────────────
-current_step: int = 0
+ENV = OpenEnvRealWorldSim(seed=42)
 
 
-class Action(BaseModel):
-    action_type: str
-    payload: dict
+def _serialize_step(
+    observation: Any,
+    reward: float,
+    done: bool,
+    info: dict[str, Any],
+) -> dict[str, Any]:
+    return {
+        "observation": observation.model_dump(),
+        "reward": validate_score(reward),
+        "done": done,
+        "info": info,
+        "task_score": validate_score(info["task_score"]),
+    }
 
 
 @app.get("/")
@@ -62,110 +55,51 @@ def metadata():
     return {
         "name": "openenv-realworld-sim",
         "description": "OpenEnv real-world benchmark: email triage, data cleaning, code review.",
-        "tasks": ["email_triage", "data_cleaning", "code_review"],
+        "tasks": [
+            {
+                "task_id": task.task_id,
+                "task_name": task.task_name,
+                "difficulty": task.difficulty,
+            }
+            for task in ENV.tasks
+        ],
+        "actions": list(Action.model_json_schema()["properties"]["action_type"]["enum"]),
     }
 
 
 @app.post("/reset")
 def reset():
-    global current_step, email_predictions, cleaned_csv, submitted_bugs, submitted_fixed_code
-    current_step = 0
-    email_predictions = []
-    cleaned_csv = ""
-    submitted_bugs = []
-    submitted_fixed_code = ""
+    observation = ENV.reset()
     return {
-        "observation": {"task": "email_triage", "step": current_step},
-        "task_score": validate_score(0.0),
-        "reward": validate_score(bounded_reward(0.0)),
+        "observation": observation.model_dump(),
+        "reward": validate_score(0.5),
         "done": False,
+        "info": {
+            "task_id": observation.task_id,
+            "task_name": observation.task_name,
+            "difficulty": observation.difficulty,
+            "task_score": validate_score(observation.progress),
+            "error": None,
+            "details": {"reset": True},
+            "reward": {
+                "value": validate_score(0.5),
+                "components": {},
+                "message": "Environment reset.",
+            },
+        },
+        "task_score": validate_score(observation.progress),
     }
 
 
 @app.post("/step")
 def step(action: Action):
-    global current_step, email_predictions, cleaned_csv, submitted_bugs, submitted_fixed_code
-
-    current_step += 1
-    reward = validate_score(bounded_reward(0.0))
-    task_score = validate_score(0.0)
-    done = False
-    observation: dict = {}
-
-    action_type = action.action_type
-    payload = action.payload
-
-    if action_type == "classify_email":
-        email_id = payload.get("id")
-        label = payload.get("label")
-        if email_id and label:
-            email_predictions = [p for p in email_predictions if p.get("id") != email_id]
-            email_predictions.append({"id": email_id, "label": label})
-        raw = grade_email_triage(email_predictions, EMAIL_ANSWERS)
-        task_score = validate_score(raw)
-        reward = validate_score(bounded_reward(raw))
-        done = len(email_predictions) >= len(EMAIL_ANSWERS)
-        observation = {"classified": email_id, "label": label}
-
-    elif action_type == "clean_data":
-        csv_text = payload.get("cleaned_csv", "")
-        if csv_text:
-            cleaned_csv = csv_text.strip()
-        raw = grade_cleaned_csv(cleaned_csv) if cleaned_csv else 0.0
-        task_score = validate_score(raw)
-        reward = validate_score(bounded_reward(raw))
-        done = raw >= COMPLETION_SCORE_THRESHOLD
-        observation = {"rows_submitted": len(cleaned_csv.splitlines()) - 1 if cleaned_csv else 0}
-
-    elif action_type == "review_code":
-        bugs = payload.get("bugs", [])
-        fixed_code = payload.get("fixed_code", "")
-        if bugs:
-            submitted_bugs = bugs
-        if fixed_code:
-            submitted_fixed_code = fixed_code.strip()
-        raw = grade_code_review(submitted_bugs, submitted_fixed_code)
-        task_score = validate_score(raw)
-        reward = validate_score(bounded_reward(raw))
-        done = raw >= COMPLETION_SCORE_THRESHOLD
-        observation = {"bugs_reported": len(submitted_bugs)}
-
-    elif action_type == "submit":
-        done = True
-        email_raw = grade_email_triage(email_predictions, EMAIL_ANSWERS)
-        data_raw = grade_cleaned_csv(cleaned_csv) if cleaned_csv else 0.0
-        code_raw = grade_code_review(submitted_bugs, submitted_fixed_code)
-        best = max(email_raw, data_raw, code_raw)
-        task_score = validate_score(best)
-        reward = validate_score(bounded_reward(best))
-        observation = {"submitted": True}
-
-    elif action_type == "analyze":
-        task_score = validate_score(0.5)
-        reward = validate_score(bounded_reward(0.1))
-        observation = {"analysis": "Inspected task inputs."}
-
-    else:
-        task_score = validate_score(0.0)
-        reward = validate_score(bounded_reward(0.0))
-        observation = {"error": f"unknown action_type: {action_type}"}
-
-    return {
-        "observation": observation,
-        "task_score": task_score,
-        "reward": reward,
-        "done": done,
-    }
+    observation, reward, done, info = ENV.step(action)
+    return _serialize_step(observation, reward, done, info)
 
 
 @app.get("/state")
 def state():
-    return {
-        "step": current_step,
-        "email_predictions": len(email_predictions),
-        "has_cleaned_csv": bool(cleaned_csv),
-        "has_code_review": bool(submitted_bugs or submitted_fixed_code),
-    }
+    return ENV.state()
 
 
 def main():
